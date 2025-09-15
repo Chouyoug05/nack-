@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -132,40 +133,34 @@ const AppRoutes = () => {
     <>
       <Routes>
         <Route path="/" element={
-          currentUser && !loading ? (
+          loading ? (
+            <LoadingScreen />
+          ) : currentUser ? (
             <Navigate to={hasProfile ? "/dashboard" : "/complete-profile"} replace />
           ) : onboardingSeen ? (
             <Navigate to="/login" replace />
           ) : <Onboarding />
         } />
         <Route path="/onboarding" element={
-          currentUser && !loading ? (
+          loading ? (
+            <LoadingScreen />
+          ) : currentUser ? (
             <Navigate to={hasProfile ? "/dashboard" : "/complete-profile"} replace />
           ) : onboardingSeen ? (
             <Navigate to="/login" replace />
           ) : <Onboarding />
         } />
         <Route path="/login" element={
-          currentUser && !loading ? (
+          loading ? (
+            <LoadingScreen />
+          ) : currentUser ? (
             <Navigate to={hasProfile ? "/dashboard" : "/complete-profile"} replace />
           ) : <Login />
         } />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/complete-profile" element={
-          loading ? (
-            <LoadingScreen />
-          ) : currentUser ? (
-            hasProfile ? <Navigate to="/dashboard" replace /> : <CompleteProfile />
-          ) : <Navigate to="/login" replace />
-        } />
-        <Route path="/dashboard" element={
-          loading ? (
-            <LoadingScreen />
-          ) : currentUser ? (
-            hasProfile ? <Dashboard /> : <Navigate to="/complete-profile" replace />
-          ) : <Navigate to="/login" replace />
-        } />
+        <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/serveur/:agentCode" element={<ServeurInterface />} />
         <Route path="/caisse/:agentCode" element={<CaisseInterface />} />
         <Route path="/agent-evenement/:agentCode" element={<AgentEvenementInterface />} />

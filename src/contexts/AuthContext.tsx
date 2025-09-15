@@ -46,23 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (user) {
           const ref = doc(db, "users", user.uid);
           const snap = await getDoc(ref);
-          const exists = snap.exists();
-          setHasProfile(exists);
-
-          // Redirection défensive si route publique (HashRouter support)
-          const path = window.location.pathname;
-          const hash = window.location.hash || '';
-          const isPublic = (
-            path === "/" || path === "/onboarding" || path === "/login" ||
-            hash === "#" || hash === "#/" || hash.startsWith("#/login") || hash.startsWith("#/onboarding")
-          );
-          if (isPublic) {
-            const host = window.location.hostname;
-            const useHash = host.endsWith('netlify.app') || host.endsWith('vercel.app');
-            const target = exists ? "/dashboard" : "/complete-profile";
-            const redirectUrl = useHash ? `/#${target}` : target;
-            window.location.replace(redirectUrl);
-          }
+                      const exists = snap.exists();
+            setHasProfile(exists);
         } else {
           setHasProfile(false);
         }
