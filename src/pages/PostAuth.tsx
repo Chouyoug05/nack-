@@ -13,12 +13,15 @@ const PostAuth = () => {
     let cancelled = false;
     const run = async () => {
       try {
-        const pending = localStorage.getItem('nack_pending_redirect') === '1';
-        if (pending && !currentUser) {
-          // lancer le redirect depuis la route canonique
+        const flow = sessionStorage.getItem('auth_flow');
+        const initiated = sessionStorage.getItem('auth_initiated') === '1';
+
+        if (flow === 'start' && !initiated && !currentUser) {
+          sessionStorage.setItem('auth_initiated', '1');
           await signInWithRedirect(auth, provider);
-          return; // on quitte, redirection en cours
+          return; // redirection en cours
         }
+
         if (!attempted) {
           await getRedirectResult(auth).catch(() => {});
           setAttempted(true);
@@ -28,20 +31,24 @@ const PostAuth = () => {
       }
     };
     run();
+
     const id = window.setTimeout(() => {
       if (cancelled) return;
       if (!currentUser && !loading) {
-        localStorage.removeItem('nack_pending_redirect');
+        sessionStorage.removeItem('auth_flow');
+        sessionStorage.removeItem('auth_initiated');
         navigate('/login', { replace: true });
       }
-    }, 6000);
+    }, 7000);
+
     return () => { cancelled = true; window.clearTimeout(id); };
   }, [attempted, currentUser, loading, navigate]);
 
   useEffect(() => {
     if (loading) return;
     if (currentUser) {
-      localStorage.removeItem('nack_pending_redirect');
+      sessionStorage.removeItem('auth_flow');
+      sessionStorage.removeItem('auth_initiated');
       navigate(hasProfile ? '/dashboard' : '/complete-profile', { replace: true });
     }
   }, [currentUser, hasProfile, loading, navigate]);
