@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { GoogleAuthProvider, initializeAuth, indexedDBLocalPersistence, browserSessionPersistence } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
@@ -14,10 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Auth avec persistance robuste (IndexedDB, fallback session) pour mobile/iOS
-export const auth = initializeAuth(app, {
-  persistence: [indexedDBLocalPersistence, browserSessionPersistence],
-});
+// Auth simple et stable
+export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 
 // Firestore avec cache persistant (offline-first) et multi-onglets
