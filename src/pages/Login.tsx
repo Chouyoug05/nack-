@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { currentUser, hasProfile, loading } = useAuth();
+  const { signInWithGoogle, currentUser, hasProfile, loading } = useAuth();
 
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [lastRedirectResult, setLastRedirectResult] = useState<UserCredential | null>(null);
@@ -45,8 +45,7 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      sessionStorage.removeItem('auth_initiated');
-      navigate('/auth/start');
+      await signInWithGoogle();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       toast({ title: "Erreur de connexion Google", description: message, variant: "destructive" });

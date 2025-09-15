@@ -2,12 +2,12 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { auth, provider, db } from "@/lib/firebase";
 import {
   onAuthStateChanged,
+  signInWithPopup,
   signInWithRedirect,
   setPersistence,
+  browserLocalPersistence,
   browserSessionPersistence,
-  indexedDBLocalPersistence,
   User,
-  getRedirectResult,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -29,18 +29,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [hasProfile, setHasProfile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Persistance robuste: IndexedDB d'abord, fallback session
-    (async () => {
-      try {
-        await setPersistence(auth, indexedDBLocalPersistence);
-      } catch (e) {
-        try { await setPersistence(auth, browserSessionPersistence); } catch (e2) { /* noop */ }
-      }
-    })();
+    // Persistance durable; fallback session si bloqué
+    setPersistence(auth, browserLocalPersistence).catch(async () => {
+      try { await setPersistence(auth, browserSessionPersistence); } catch { /* noop */ }
+    });
 
-    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch (e) { /* noop */ }
-
-    getRedirectResult(auth).catch((e) => { /* noop */ });
+    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch { /* noop */ }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
@@ -78,8 +72,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    // Flux unique et fiable (mobile/desktop): Redirect
-    await signInWithRedirect(auth, provider);
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobile = /Mobi|Android|iP(hone|ad|od)/i.test(ua);
+    try {
+      if (isMobile) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      await signInWithPopup(auth, provider);
+    } catch {
+      await signInWithRedirect(auth, provider);
+    }
   };
 
   const signOutUser = async () => {

@@ -26,8 +26,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import AuthStart from "@/pages/AuthStart";
-import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -134,8 +132,6 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        <Route path="/auth/start" element={<AuthStart />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/" element={
           loading ? (
             <LoadingScreen />
