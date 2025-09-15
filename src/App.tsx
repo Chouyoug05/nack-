@@ -26,6 +26,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import PostAuth from "@/pages/PostAuth";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
+        <Route path="/post-auth" element={<PostAuth />} />
         <Route path="/" element={
           loading ? (
             <LoadingScreen />

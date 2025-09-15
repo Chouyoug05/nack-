@@ -45,10 +45,14 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      localStorage.setItem('nack_pending_redirect', '1');
       await signInWithGoogle();
+      // Après signInWithRedirect, on ne revient pas ici tout de suite.
+      navigate('/post-auth');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       toast({ title: "Erreur de connexion Google", description: message, variant: "destructive" });
+      localStorage.removeItem('nack_pending_redirect');
     }
   };
 
