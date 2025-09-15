@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 35 25% 97%;
+    --foreground: 0 0% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    --primary: 0 70% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 35 20% 85%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 35 15% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 15 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 15% 88%;
+    --input: 35 15% 88%;
+    --ring: 0 70% 50%;
+
+    --radius: 0.75rem;
+
+    /* NACK! Design System */
+    --nack-red: 0 70% 50%;
+    --nack-red-light: 0 70% 60%;
+    --nack-red-dark: 0 70% 40%;
+    --nack-beige: 35 25% 90%;
+    --nack-beige-light: 35 25% 95%;
+    --nack-cream: 35 25% 97%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--nack-red)), hsl(var(--nack-red-light)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--nack-beige)), hsl(var(--nack-cream)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--nack-red)) 0%, hsl(var(--accent)) 100%);
+    
+    /* Shadows */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--nack-red) / 0.2);
+    --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --shadow-button: 0 4px 12px -2px hsl(var(--nack-red) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 15 85% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 70% 55%;
+    
+    /* Dark mode NACK! colors */
+    --nack-red: 0 70% 55%;
+    --nack-red-light: 0 70% 65%;
+    --nack-red-dark: 0 70% 45%;
+    --nack-beige: 35 15% 25%;
+    --nack-beige-light: 35 15% 30%;
+    --nack-cream: 0 0% 12%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Animations utilitaires */
+@layer utilities {
+  .animate-fade-in { animation: fade-in 300ms ease-out both; }
+  .animate-slide-up { animation: slide-up 350ms ease-out both; }
+  .animate-scale-in { animation: scale-in 250ms var(--transition-bounce) both; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Composants */
+@layer components {
+  .card-animated { @apply animate-slide-up shadow-card; }
+  .dialog-animated { @apply animate-fade-in; }
+}
