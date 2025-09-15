@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { EventProvider } from "@/contexts/EventContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -219,9 +219,9 @@ const App = () => (
           <OrderProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter basename={import.meta.env.BASE_URL || '/'}>
+            <HashRouter>
               <AppRoutes />
-            </BrowserRouter>
+            </HashRouter>
           </OrderProvider>
         </AuthProvider>
       </EventProvider>

@@ -2,15 +2,12 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { auth, provider, db } from "@/lib/firebase";
 import {
   onAuthStateChanged,
-  signInWithPopup,
   signInWithRedirect,
   setPersistence,
-  browserLocalPersistence,
-  signOut,
-  User,
-  getRedirectResult,
   browserSessionPersistence,
   indexedDBLocalPersistence,
+  User,
+  getRedirectResult,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -32,18 +29,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [hasProfile, setHasProfile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Persistance robuste: IndexedDB d'abord, fallback session (meilleur sur mobile)
+    // Persistance robuste: IndexedDB d'abord, fallback session
     (async () => {
       try {
         await setPersistence(auth, indexedDBLocalPersistence);
-      } catch {
-        try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
+      } catch (e) {
+        try { await setPersistence(auth, browserSessionPersistence); } catch (e2) { /* noop */ }
       }
     })();
 
-    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch { /* ignore */ }
+    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch (e) { /* noop */ }
 
-    getRedirectResult(auth).catch(() => { /* ignore */ });
+    getRedirectResult(auth).catch((e) => { /* noop */ });
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
@@ -81,23 +78,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const isMobile = /Mobi|Android|iP(hone|ad|od)/i.test(ua);
-
-    try {
-      if (isMobile) {
-        try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
-        await signInWithRedirect(auth, provider);
-        return;
-      }
-      await signInWithPopup(auth, provider);
-    } catch {
-      try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
-      await signInWithRedirect(auth, provider);
-    }
+    // Flux unique et fiable (mobile/desktop): Redirect
+    await signInWithRedirect(auth, provider);
   };
 
   const signOutUser = async () => {
+    const { signOut } = await import("firebase/auth");
     await signOut(auth);
   };
 
