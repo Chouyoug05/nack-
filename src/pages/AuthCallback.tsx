@@ -1,31 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, provider } from "@/lib/firebase";
-import { getRedirectResult, signInWithRedirect } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { getRedirectResult } from "firebase/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
-const PostAuth = () => {
+const AuthCallback = () => {
   const navigate = useNavigate();
   const { currentUser, hasProfile, loading } = useAuth();
-  const [attempted, setAttempted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       try {
-        const flow = sessionStorage.getItem('auth_flow');
-        const initiated = sessionStorage.getItem('auth_initiated') === '1';
-
-        if (flow === 'start' && !initiated && !currentUser) {
-          sessionStorage.setItem('auth_initiated', '1');
-          await signInWithRedirect(auth, provider);
-          return; // redirection en cours
-        }
-
-        if (!attempted) {
-          await getRedirectResult(auth).catch(() => {});
-          setAttempted(true);
-        }
+        await getRedirectResult(auth).catch(() => {});
       } finally {
         // no-op
       }
@@ -35,19 +22,16 @@ const PostAuth = () => {
     const id = window.setTimeout(() => {
       if (cancelled) return;
       if (!currentUser && !loading) {
-        sessionStorage.removeItem('auth_flow');
         sessionStorage.removeItem('auth_initiated');
         navigate('/login', { replace: true });
       }
     }, 7000);
-
     return () => { cancelled = true; window.clearTimeout(id); };
-  }, [attempted, currentUser, loading, navigate]);
+  }, [currentUser, loading, navigate]);
 
   useEffect(() => {
     if (loading) return;
     if (currentUser) {
-      sessionStorage.removeItem('auth_flow');
       sessionStorage.removeItem('auth_initiated');
       navigate(hasProfile ? '/dashboard' : '/complete-profile', { replace: true });
     }
@@ -60,4 +44,4 @@ const PostAuth = () => {
   );
 };
 
-export default PostAuth; 
+export default AuthCallback; 

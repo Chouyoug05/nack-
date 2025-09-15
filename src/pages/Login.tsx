@@ -45,14 +45,11 @@ const Login = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      sessionStorage.setItem('auth_flow', 'start');
       sessionStorage.removeItem('auth_initiated');
-      navigate('/post-auth');
+      navigate('/auth/start');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       toast({ title: "Erreur de connexion Google", description: message, variant: "destructive" });
-      sessionStorage.removeItem('auth_flow');
-      sessionStorage.removeItem('auth_initiated');
     }
   };
 
