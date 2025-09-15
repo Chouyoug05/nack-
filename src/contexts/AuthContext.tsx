@@ -7,6 +7,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   browserSessionPersistence,
+  indexedDBLocalPersistence,
   User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -29,12 +30,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [hasProfile, setHasProfile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Persistance durable; fallback session si bloqué
-    setPersistence(auth, browserLocalPersistence).catch(async () => {
-      try { await setPersistence(auth, browserSessionPersistence); } catch { /* noop */ }
-    });
-
-    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch { /* noop */ }
+    // Persistance robuste: IndexedDB d'abord, fallback session; dernier recours: local
+    (async () => {
+      try {
+        await setPersistence(auth, indexedDBLocalPersistence);
+      } catch {
+        try { await setPersistence(auth, browserSessionPersistence); } catch { try { await setPersistence(auth, browserLocalPersistence); } catch { /* noop */ } }
+      }
+    })();
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
