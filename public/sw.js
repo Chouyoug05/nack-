@@ -1,4 +1,4 @@
-const VERSION = 'v2';
+const VERSION = 'v3';
 const STATIC_CACHE = `nack-static-${VERSION}`;
 const HTML_CACHE = `nack-html-${VERSION}`;
 const IMAGE_CACHE = `nack-img-${VERSION}`;
@@ -45,20 +45,37 @@ function isNavigationRequest(request) {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
-  // NetworkFirst pour HTML/navigation avec fallback cache/offline
+  // Filtrer les schémas non supportés (ex: chrome-extension)
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return; // URL invalide, ne pas intercepter
+  }
+  const protocol = url.protocol;
+  if (protocol !== 'http:' && protocol !== 'https:') {
+    return; // ne pas intercepter les requêtes non http(s)
+  }
+
+  const isSameOrigin = url.origin === self.location.origin;
+
+  // NetworkFirst pour HTML/navigation (même origine uniquement)
   if (isNavigationRequest(request)) {
+    if (!isSameOrigin) return;
     event.respondWith(
       (async () => {
         try {
           const net = await fetch(request);
-          const cache = await caches.open(HTML_CACHE);
-          cache.put(request, net.clone());
+          if (net && net.ok) {
+            const cache = await caches.open(HTML_CACHE);
+            cache.put(request, net.clone());
+          }
           return net;
         } catch (e) {
           const cache = await caches.open(HTML_CACHE);
           const cached = await cache.match(request);
           if (cached) return cached;
-          // fallback sur shell
+          // fallback shell
           return caches.match('/index.html');
         }
       })()
@@ -66,17 +83,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const url = new URL(request.url);
-
-  // CacheFirst pour images/icônes
+  // CacheFirst pour images/icônes (même origine uniquement)
   if (request.destination === 'image' || url.pathname.startsWith('/icons/')) {
+    if (!isSameOrigin) {
+      // laisser passer réseau sans cache pour cross-origin
+      event.respondWith(fetch(request));
+      return;
+    }
     event.respondWith(
       caches.open(IMAGE_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) return cached;
         try {
           const net = await fetch(request);
-          cache.put(request, net.clone());
+          if (net && net.ok) cache.put(request, net.clone());
           return net;
         } catch (e) {
           return caches.match('/favicon.png');
@@ -86,13 +106,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // StaleWhileRevalidate pour autres statiques (CSS/JS)
+  // StaleWhileRevalidate pour scripts/styles/fonts (même origine uniquement)
   if (request.destination === 'script' || request.destination === 'style' || request.destination === 'font') {
+    if (!isSameOrigin) {
+      // cross-origin: pas de cache SW
+      event.respondWith(fetch(request));
+      return;
+    }
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
         const fetchPromise = fetch(request).then((net) => {
-          cache.put(request, net.clone());
+          if (net && net.ok) cache.put(request, net.clone());
           return net;
         }).catch(() => undefined);
         return cached || fetchPromise || fetch(request).catch(() => cached);
@@ -101,8 +126,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Par défaut: network avec fallback cache
+  // Par défaut: réseau avec fallback cache (même origine seulement)
+  if (!isSameOrigin) return; // ne pas intercepter cross-origin par défaut
   event.respondWith(
-    fetch(request).catch(() => caches.match(request))
+    fetch(request).then(async (net) => {
+      return net;
+    }).catch(() => caches.match(request))
   );
 });
