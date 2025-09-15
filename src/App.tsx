@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, HashRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { OrderProvider } from "@/contexts/OrderContext";
 import { EventProvider } from "@/contexts/EventContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -33,23 +33,6 @@ const LoadingScreen = () => (
     Chargement...
   </div>
 );
-
-const AdaptiveRouter = ({ children }: { children: React.ReactNode }) => {
-  const useHash = typeof window !== 'undefined'
-    && (window.location.hostname.endsWith('netlify.app') || window.location.hostname.endsWith('vercel.app'));
-  if (useHash) {
-    return (
-      <HashRouter>
-        {children}
-      </HashRouter>
-    );
-  }
-  return (
-    <BrowserRouter basename={import.meta.env.BASE_URL || '/'}>
-      {children}
-    </BrowserRouter>
-  );
-};
 
 const AppRoutes = () => {
   const location = useLocation();
@@ -241,9 +224,9 @@ const App = () => (
           <OrderProvider>
             <Toaster />
             <Sonner />
-            <AdaptiveRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL || '/'}>
               <AppRoutes />
-            </AdaptiveRouter>
+            </BrowserRouter>
           </OrderProvider>
         </AuthProvider>
       </EventProvider>
