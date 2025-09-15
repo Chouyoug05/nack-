@@ -85,19 +85,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const hostname = (typeof window !== 'undefined' && window.location.hostname) || '';
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
     const isIOS = typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent);
 
-    // En production (Netlify/domaine custom) ou iOS: privilégier Redirect (fiable et sans popup)
-    if (!isLocal || isIOS) {
-      await signInWithRedirect(auth, provider);
-      return;
-    }
-
-    // En local: popup d'abord, fallback redirect si bloqué
+    // Tenter la popup partout; fallback redirect si bloquée ou iOS/embedded
     try {
-      await signInWithPopup(auth, provider);
+      if (!isIOS) {
+        await signInWithPopup(auth, provider);
+        return;
+      }
+      // iOS: souvent popup bloquée, passer en redirect
+      await signInWithRedirect(auth, provider);
     } catch {
       await signInWithRedirect(auth, provider);
     }
