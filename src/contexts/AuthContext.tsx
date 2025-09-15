@@ -31,17 +31,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [hasProfile, setHasProfile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Ensure auth state persists across reloads
+    // Ensure auth state persists across reloads (desktop par défaut)
     setPersistence(auth, browserLocalPersistence).catch(async () => {
-      // Fallback if cookies/3rd-party storage are blocked
-      try { await setPersistence(auth, browserSessionPersistence); } catch (err) { /* ignore persistence error */ }
+      try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
     });
 
-    // Optional: use device language and prompt account selection
-    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch (err) { /* ignore custom params error */ }
+    try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch { /* ignore */ }
 
-    // Handle redirect results to complete sign-in on Chrome/blocked popup scenarios
-    getRedirectResult(auth).catch(() => { /* ignore redirect result error */ });
+    getRedirectResult(auth).catch(() => { /* ignore */ });
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
@@ -52,7 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const exists = snap.exists();
           setHasProfile(exists);
 
-          // Redirection défensive si on se trouve sur des routes publiques
+          // Redirection défensive si route publique (HashRouter support)
           const path = window.location.pathname;
           const hash = window.location.hash || '';
           const isPublic = (
@@ -95,17 +92,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const isIOS = typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent);
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const isMobile = /Mobi|Android|iP(hone|ad|od)/i.test(ua);
 
-    // Tenter la popup partout; fallback redirect si bloquée ou iOS/embedded
     try {
-      if (!isIOS) {
-        await signInWithPopup(auth, provider);
+      if (isMobile) {
+        // Mobile: session only + redirect fiable
+        try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
+        await signInWithRedirect(auth, provider);
         return;
       }
-      // iOS: souvent popup bloquée, passer en redirect
-      await signInWithRedirect(auth, provider);
+
+      // Desktop: popup d'abord (local persistence déjà configurée), fallback redirect (session)
+      await signInWithPopup(auth, provider);
     } catch {
+      try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
       await signInWithRedirect(auth, provider);
     }
   };
