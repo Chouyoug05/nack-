@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signInWithGoogle, currentUser, hasProfile, loading } = useAuth();
+  const { currentUser, hasProfile, loading } = useAuth();
 
   const [debugEnabled, setDebugEnabled] = useState(false);
   const [lastRedirectResult, setLastRedirectResult] = useState<UserCredential | null>(null);
@@ -46,8 +46,6 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     try {
       localStorage.setItem('nack_pending_redirect', '1');
-      await signInWithGoogle();
-      // Après signInWithRedirect, on ne revient pas ici tout de suite.
       navigate('/post-auth');
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);

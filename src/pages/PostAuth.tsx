@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "@/lib/firebase";
-import { getRedirectResult } from "firebase/auth";
+import { auth, provider } from "@/lib/firebase";
+import { getRedirectResult, signInWithRedirect } from "firebase/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
 const PostAuth = () => {
@@ -13,6 +13,12 @@ const PostAuth = () => {
     let cancelled = false;
     const run = async () => {
       try {
+        const pending = localStorage.getItem('nack_pending_redirect') === '1';
+        if (pending && !currentUser) {
+          // lancer le redirect depuis la route canonique
+          await signInWithRedirect(auth, provider);
+          return; // on quitte, redirection en cours
+        }
         if (!attempted) {
           await getRedirectResult(auth).catch(() => {});
           setAttempted(true);
@@ -24,7 +30,6 @@ const PostAuth = () => {
     run();
     const id = window.setTimeout(() => {
       if (cancelled) return;
-      // Si après un délai la session n'est pas restaurée, on renvoie vers /login
       if (!currentUser && !loading) {
         localStorage.removeItem('nack_pending_redirect');
         navigate('/login', { replace: true });
