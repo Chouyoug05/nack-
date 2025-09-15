@@ -10,6 +10,7 @@ import {
   User,
   getRedirectResult,
   browserSessionPersistence,
+  indexedDBLocalPersistence,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -31,10 +32,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [hasProfile, setHasProfile] = useState<boolean>(false);
 
   useEffect(() => {
-    // Ensure auth state persists across reloads (desktop par défaut)
-    setPersistence(auth, browserLocalPersistence).catch(async () => {
-      try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
-    });
+    // Persistance robuste: IndexedDB d'abord, fallback session (meilleur sur mobile)
+    (async () => {
+      try {
+        await setPersistence(auth, indexedDBLocalPersistence);
+      } catch {
+        try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
+      }
+    })();
 
     try { provider.setCustomParameters?.({ prompt: 'select_account' }); } catch { /* ignore */ }
 
@@ -46,8 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (user) {
           const ref = doc(db, "users", user.uid);
           const snap = await getDoc(ref);
-                      const exists = snap.exists();
-            setHasProfile(exists);
+          setHasProfile(snap.exists());
         } else {
           setHasProfile(false);
         }
@@ -82,13 +86,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       if (isMobile) {
-        // Mobile: session only + redirect fiable
         try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
         await signInWithRedirect(auth, provider);
         return;
       }
-
-      // Desktop: popup d'abord (local persistence déjà configurée), fallback redirect (session)
       await signInWithPopup(auth, provider);
     } catch {
       try { await setPersistence(auth, browserSessionPersistence); } catch { /* ignore */ }
